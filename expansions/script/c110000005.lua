@@ -20,7 +20,16 @@ function c110000005.initial_effect(c)
 	e2:SetCondition(c110000005.spcon)
 	e2:SetOperation(c110000005.spop)
 	c:RegisterEffect(e2)
-	
+
+	local e3=Effect.CreateEffect(c)
+	e3:SetCategory(CATEGORY_REMOVE+CATEGORY_SPECIAL_SUMMON+CATEGORY_FUSION_SUMMON)
+	e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
+	e3:SetProperty(EFFECT_FLAG_DELAY)
+	e3:SetCode(EVENT_TO_GRAVE)
+	e3:SetCountLimit(1,110000006)
+	e3:SetTarget(c110000005.fustg)
+	e3:SetOperation(c110000005.fusop)
+	c:RegisterEffect(e3)
 end
 
 function c110000005.desfilter(c)
@@ -68,4 +77,65 @@ function c110000005.spop(e,tp,eg,ep,ev,re,r,rp)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_RELEASE)
 	local g=Duel.SelectReleaseGroup(tp, c110000005.relfilter, 1, 1, nil, tp,e:GetHandler())
 	Duel.Release(g,REASON_RELEASE+REASON_COST)
+end
+
+function c110000005.fusfilter1(c,e)
+	return c:IsAbleToRemove() and not c:IsImmuneToEffect(e)
+end
+
+function c110000005.fusfilter2(c,e,tp,m,chkf,mf)
+	return c:IsSetCard(0xfdff) and c:IsCanBeSpecialSummoned(e,SUMMON_TYPE_FUSION,tp,false,false) and c:CheckFusionMaterial(m,nil,chkf,true) and (not f or f(c))
+end
+
+function c110000005.fustg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then
+		local chkf=tp|0x200
+		local mg=Duel.GetMatchingGroup(c110000005.fusfilter1,tp,LOCATION_HAND+LOCATION_MZONE+LOCATION_GRAVE,0,nil,e)
+		local res=Duel.IsExistingMatchingCard(c110000005.fusfilter2,tp,LOCATION_EXTRA,0,1,nil,e,tp,mg,chkf,nil)
+		if not res then
+			local ce=Duel.GetChainMaterial(tp)
+			if ce~=nil then
+				local fgroup=ce:GetTarget()
+				local mg3=fgroup(ce,e,tp)
+				local mf=ce:GetValue()
+				res=Duel.IsExistingMatchingCard(c110000005.fusfilter2,tp,LOCATION_EXTRA,0,1,nil,e,tp,mg3,chkf,mf)
+			end
+		end
+	end
+	Duel.SetOperationInfo(0,CATEGORY_REMOVE,nil,0,tp,LOCATION_HAND+LOCATION_MZONE+LOCATION_GRAVE)
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_EXTRA)
+end
+
+function c110000005.fusop(e,tp,eg,ep,ev,re,r,rp)
+	local chkf=tp|0x200
+	local mg=Duel.GetMatchingGroup(aux.NecroValleyFilter(c110000005.fusfilter1),tp,LOCATION_HAND+LOCATION_MZONE+LOCATION_GRAVE,0,nil,e)
+	local sg1=Duel.GetMatchingGroup(c110000005.fusfilter2,tp,LOCATION_EXTRA,0,nil,e,tp,mg,chkf,nil)
+	local mg3=nil
+	local sg2=nil
+	local ce=Duel.GetChainMaterial(tp)
+	if ce~=nil then
+		local fgroup=ce:GetTarget()
+		mg3=fgroup(ce,e,tp)
+		local mf=ce:GetValue()
+		sg2=Duel.GetMatchingGroup(c110000005.fusfilter2,,tp,LOCATION_EXTRA,0,nil,e,tp,mg3,chkf,mf)
+	end
+	if sg1:GetCount()>0 or (sg2~=nil and sg2:GetCount()>0) then
+		local sg=sg1:Clone()
+		if sg2 then sg:Merge(sg2) end
+		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+		local tg=sg:Select(tp,1,1,nil)
+		local tc=tg:GetFirst()
+		if sg1:IsContains(tc) and (sg2==nil or not sg2:IsContains(tc) or not Duel.SelectYesNo(tp,ce:GetDescription())) then
+			local mat1=Duel.SelectFusionMaterial(tp,tc,mg1,nil,chkf)
+			tc:SetMaterial(mat1)
+			Duel.Remove(mat1,POS_FACEUP,REASON_EFFECT+REASON_MATERIAL+REASON_FUSION)
+			Duel.BreakEffect()
+			Duel.SpecialSummon(tc,SUMMON_TYPE_FUSION,tp,tp,false,false,POS_FACEUP)
+		else
+			local mat2=Duel.SelectFusionMaterial(tp,tc,mg3,nil,chkf)
+			local fop=ce:GetOperation()
+			fop(ce,e,tp,tc,mat2)
+		end
+		tc:CompleteProcedure()
+	end
 end
