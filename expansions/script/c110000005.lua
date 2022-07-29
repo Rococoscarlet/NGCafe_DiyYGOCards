@@ -101,9 +101,10 @@ function c110000005.fustg(e,tp,eg,ep,ev,re,r,rp,chk)
 				res=Duel.IsExistingMatchingCard(c110000005.fusfilter2,tp,LOCATION_EXTRA,0,1,nil,e,tp,mg3,chkf,mf)
 			end
 		end
+		return res
 	end
-	Duel.SetOperationInfo(0,CATEGORY_REMOVE,nil,0,tp,LOCATION_HAND+LOCATION_MZONE+LOCATION_GRAVE)
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_EXTRA)
+	Duel.SetOperationInfo(0,CATEGORY_REMOVE,nil,1,tp,LOCATION_HAND+LOCATION_MZONE+LOCATION_GRAVE)
 end
 
 function c110000005.fusop(e,tp,eg,ep,ev,re,r,rp)
@@ -126,7 +127,7 @@ function c110000005.fusop(e,tp,eg,ep,ev,re,r,rp)
 		local tg=sg:Select(tp,1,1,nil)
 		local tc=tg:GetFirst()
 		if sg1:IsContains(tc) and (sg2==nil or not sg2:IsContains(tc) or not Duel.SelectYesNo(tp,ce:GetDescription())) then
-			local mat1=Duel.SelectFusionMaterial(tp,tc,mg1,nil,chkf)
+			local mat1=Duel.SelectFusionMaterial(tp,tc,mg,nil,chkf)
 			tc:SetMaterial(mat1)
 			Duel.Remove(mat1,POS_FACEUP,REASON_EFFECT+REASON_MATERIAL+REASON_FUSION)
 			Duel.BreakEffect()
