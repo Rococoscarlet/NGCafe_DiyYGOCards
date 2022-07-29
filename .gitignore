@@ -1,6 +1,7 @@
 /deck
 /icon
-/pack
+/pack/*.ydk
+!/pack/NGCafe.ydk
 /pics
 /replay
 /script
